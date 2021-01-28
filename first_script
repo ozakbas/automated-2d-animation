@@ -1,0 +1,47 @@
+import bpy
+
+
+upper_left = [-4.3202, 2.4302]
+bottom_right = [4.3202, -2.4302]
+
+
+
+
+print("bottom right:", bottom_right )
+print("upper_left:", upper_left)
+
+height = bottom_right[1] - upper_left[1]
+width = bottom_right[0] - upper_left[0]
+
+print(height)
+print(width)
+
+
+input_x = 1104.28
+input_y = 439.128
+
+input_width = 1920
+input_height = 1080
+
+
+
+output_position_x  = upper_left[0] + ( (input_x / input_width) * width )
+output_position_y  = upper_left[1] + ( (input_y / input_height) * height )
+
+print("output_position_x", output_position_x)
+
+print("output_position_y", output_position_y)
+
+
+
+bpy.data.objects["circle"].location = (output_position_x, 0, output_position_y)
+
+
+
+
+
+
+
+
+
+
