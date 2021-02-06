@@ -1,6 +1,7 @@
 import bpy
 import os
 import json
+import math
 
 upper_left = [-4.3202, 2.4302]
 bottom_right = [4.3202, -2.4302]
@@ -11,6 +12,13 @@ width = bottom_right[0] - upper_left[0]
 input_width = 1920
 input_height = 1080
 
+body = bpy.data.objects["Body"]
+head = bpy.data.objects["Head"]
+
+Upper_Arm_L = bpy.data.objects["Upper_Arm_L"]
+Upper_Arm_R = bpy.data.objects["Upper_Arm_R"]
+Arm_L = bpy.data.objects["Arm_L"]
+Arm_R = bpy.data.objects["Arm_R"]
 
 body_parts =  [ "Nose", "Neck", "RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow", "LWrist", "MidHip", "RHip", "RKnee", "RAnkle", "LHip", "LKnee", "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "Background" ]
 
@@ -23,9 +31,9 @@ phase 1: visualization
     ✓ 2- position each keypoint for each frame
     
 phase 2: proof of concept
-    1- replace keypoints with rig keypoints
-    2- calculate slopes
-    3- transfer slope data for rigging
+    ✓- replace keypoints with rig keypoints
+    ✓- calculate slopes
+    ✓- transfer slope data for rigging
     4- replace keypoints
     5- fix errors with constraints and detection confidence data 
 
@@ -43,7 +51,8 @@ def process_json():
     
     processed_frames = []
     
-    with os.scandir('./output_json_folder') as frames:
+    directory = "C:/Users/ereno/automated-2d-animation/output_json_folder2"
+    with os.scandir(directory) as frames:
         for frame in frames:
             with open(frame, 'r') as f:
                 
@@ -77,15 +86,75 @@ def locate_position(body_part_index, frame):
 
 
 
+def rotate(object, keypoint_index, frame, parent):
+    
+    angle = 0
+    
+    start_x = frame[keypoint_index]["x"]
+    start_y = frame[keypoint_index]["y"]    
+    end_x = frame[keypoint_index + 1]["x"]
+    end_y = frame[keypoint_index + 1]["y"]
+
+    # Find the slope angle
+    angle = math.degrees(math.atan((end_y - start_y) / (end_x - start_x)))
+    
+    if(end_x < start_x):
+        angle += 180
+    
+    
+    object.rotation_euler[1] = math.radians(angle - 90 + parent)
+    print("parent: ", parent )
+    
+
+    return angle
+  
+    
+
 processed_frames = process_json()
 
-for i in range(1, len(processed_frames)+1):
+
+
+
+upper_L = 0
+upper_R = 0
+
+
+for i in range(0, len(processed_frames)):
+    
     
     for keypoint_index in range(0, 24):
         
         output_x, output_y = locate_position(keypoint_index, processed_frames[i-1])
     
         object_name = "circle" + str(keypoint_index)
+        
+        if(keypoint_index == 1):
+            body.location = (output_x, 0, output_y)
+            body.keyframe_insert(data_path="location", frame = i)
+        
+        # right upper arm
+        elif(keypoint_index == 2):
+            upper_R = rotate(Upper_Arm_R, keypoint_index, processed_frames[i], 0)
+            Upper_Arm_R.keyframe_insert(data_path="rotation_euler", frame = i)
+            
+        # right arm
+        elif(keypoint_index == 3):
+            rotate(Arm_R, keypoint_index, processed_frames[i], upper_R)
+            Arm_R.keyframe_insert(data_path="rotation_euler", frame = i)
+            upper_R = 0
+        
+        # left upper arm
+        elif(keypoint_index == 5):
+            upper_L = rotate(Upper_Arm_L, keypoint_index, processed_frames[i], 0)
+            Upper_Arm_L.keyframe_insert(data_path="rotation_euler", frame = i)
+        
+        # left arm
+        elif(keypoint_index == 6):
+            rotate(Arm_L, keypoint_index, processed_frames[i], upper_L)
+            Arm_L.keyframe_insert(data_path="rotation_euler", frame = i)
+            upper_L = 0
+            
+        
         
         obj = bpy.data.objects[object_name]
         obj.location = (output_x, 0, output_y)
