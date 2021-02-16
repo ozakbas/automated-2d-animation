@@ -1,3 +1,4 @@
+import pose
 import bpy
 import imp
 import os
@@ -7,27 +8,17 @@ dir = os.path.dirname(bpy.data.filepath)
 if not dir in sys.path:
     sys.path.append(dir)
 
-import pose
 
 # force a reload
 imp.reload(pose)
 
 
+frames = pose.process_json()
+smoothed_frames = pose.smoothing_frames(frames)
+
+pose.drawPose(smoothed_frames)
 
 
-body = bpy.data.objects["Body"]
-head = bpy.data.objects["Head"]
-Upper_Arm_L = bpy.data.objects["Upper_Arm_L"]
-Upper_Arm_R = bpy.data.objects["Upper_Arm_R"]
-Arm_L = bpy.data.objects["Arm_L"]
-Arm_R = bpy.data.objects["Arm_R"]
-
-
-processed_frames = pose.process_json()
-
-pose.drawPose(processed_frames)
-
-# pose.softing
 # pose.multiple character check?
 # pose conditions: front back, far, close
 

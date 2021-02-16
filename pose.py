@@ -22,8 +22,8 @@ Leg_R = bpy.data.objects["Leg_R"]
 Foot_L = bpy.data.objects["Foot_L"]
 Foot_R = bpy.data.objects["Foot_R"]
 
-rotation_threshold = 4
-body_threshold = 0.05
+rotation_threshold = 2
+body_threshold = 0.001
 
 
 def process_json():
@@ -50,6 +50,61 @@ def process_json():
                 processed_frames.append(keypoints)
 
     return processed_frames
+
+
+def smoothing_frames(frames):
+
+    new_frames = frames
+
+    # repeat for each keypoint node
+    for node in range(0, 24):
+
+        # assign avg of 3 frames unless the distance is more than the threshold
+        for i in range(0, len(frames), 3):
+            first = frames[i][node]
+            second = frames[i+1][node]
+            third = frames[i+2][node]
+
+            d1 = calculate_distance(first, second)
+            d2 = calculate_distance(second, third)
+
+            threshold = 3
+
+            if((d1 > threshold) or (d2 > threshold)):
+                continue
+
+            else:
+                avg_x, avg_y = calculate_avg(first, second, third)
+
+                avg_item = {"x": avg_x, "y": avg_y}
+
+                new_frames[i][node] = avg_item
+                new_frames[i+1][node] = avg_item
+                new_frames[i+2][node] = avg_item
+
+    return new_frames
+
+
+def calculate_avg(a, b, c):
+
+    x_list = [a["x"], b["x"], c["x"]]
+    y_list = [a["y"], b["y"], c["y"]]
+
+    avg_x = sum(x_list) / 3
+    avg_y = sum(y_list) / 3
+
+    return avg_x, avg_y
+
+
+def calculate_distance(a, b):
+
+    x1 = a["x"]
+    x2 = b["x"]
+    y1 = a["y"]
+    y2 = b["y"]
+
+    result = ((((x2 - x1) ** 2) + ((y2-y1) ** 2)) ** 0.5)
+    return result
 
 
 def locate_position(body_part_index, frame):
