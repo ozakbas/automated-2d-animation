@@ -1,3 +1,4 @@
+
 import pose
 import bpy
 import imp
@@ -12,8 +13,10 @@ if not dir in sys.path:
 # force a reload
 imp.reload(pose)
 
+# TODO parenting & masking
 
 frames = pose.process_json()
+
 smoothed_frames = pose.smoothing_frames(frames)
 
 pose.drawPose(smoothed_frames)
