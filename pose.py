@@ -152,7 +152,7 @@ def drawPose(processed_frames):
     upper_Leg_L = 0
     upper_Leg_R = 0
 
-    for i in range(0, len(processed_frames)):
+    for i in range(0, len(processed_frames), 2):
 
         for keypoint_index in range(0, 24):
 
