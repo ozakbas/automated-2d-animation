@@ -9,6 +9,8 @@ class PosePanel(bpy.types.Panel):
 
     def draw(self, context):
         self.layout.operator(
+            "skeleton.operator", icon='MESH_CUBE', text="Initialize skeleton")
+        self.layout.operator(
             "pose.operator", icon='MESH_CUBE', text="Generate poses")
 
 

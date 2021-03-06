@@ -21,19 +21,6 @@ body_threshold = 0.001
 body_parts = ["Nose", "Neck", "RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow", "LWrist", "MidHip", "RHip", "RKnee", "RAnkle",
               "LHip", "LKnee", "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "Background"]
 
-body = bpy.data.objects["Body"]
-head = bpy.data.objects["Head"]
-Upper_Arm_L = bpy.data.objects["Upper_Arm_L"]
-Upper_Arm_R = bpy.data.objects["Upper_Arm_R"]
-Arm_L = bpy.data.objects["Arm_L"]
-Arm_R = bpy.data.objects["Arm_R"]
-
-Upper_Leg_L = bpy.data.objects["Upper_Leg_L"]
-Upper_Leg_R = bpy.data.objects["Upper_Leg_R"]
-Leg_L = bpy.data.objects["Leg_L"]
-Leg_R = bpy.data.objects["Leg_R"]
-Foot_L = bpy.data.objects["Foot_L"]
-Foot_R = bpy.data.objects["Foot_R"]
 
 '''
 
@@ -237,6 +224,17 @@ def rotate(object, keypoint_index, frame, parent):
 
 def drawPose(processed_frames):
 
+    body = D.objects["Body"]
+    Upper_Arm_L = D.objects["Upper_Arm_L"]
+    Upper_Arm_R = D.objects["Upper_Arm_R"]
+    Arm_L = D.objects["Arm_L"]
+    Arm_R = D.objects["Arm_R"]
+
+    Upper_Leg_L = D.objects["Upper_Leg_L"]
+    Upper_Leg_R = D.objects["Upper_Leg_R"]
+    Leg_L = D.objects["Leg_L"]
+    Leg_R = D.objects["Leg_R"]
+
     upper_Arm_L = 0
     upper_Arm_R = 0
     upper_Leg_L = 0
@@ -249,11 +247,14 @@ def drawPose(processed_frames):
             output_x, output_y = locate_position(
                 keypoint_index, processed_frames[i-1])
 
+            # Visualisation test with circles
+            '''
             object_name = "circle" + str(keypoint_index)
 
             obj = bpy.data.objects[object_name]
             obj.location = (output_x, 0, output_y)
             obj.keyframe_insert(data_path="location", frame=i)
+            '''
 
             if(keypoint_index == 1):
 
@@ -323,6 +324,41 @@ def drawPose(processed_frames):
                 upper_Leg_L = 0
 
 
+def initialize_skeleton():
+
+    body_parts_list = ["Body", "Head", "Upper_Arm_L", "Upper_Arm_R", "Upper_Leg_L", "Upper_Leg_R", "Arm_L",
+                       "Arm_R", "Leg_L", "Leg_R", "Eyes", "mouth_a", "mouth_f", "mouth_l", "mouth_m", "mouth_t", "mouth_u"]
+
+    collection = bpy.data.collections.new("Character")
+    collection2 = bpy.data.collections.new("Mouths")
+    bpy.context.scene.collection.children.link(collection)
+    bpy.context.scene.collection.children.link(collection2)
+
+    for i in range(len(body_parts_list)):
+
+        obj_name = body_parts_list[i]
+
+        bpy.ops.object.gpencil_add(location=(0, 0, 0), type='EMPTY')
+        bpy.context.scene.objects["GPencil"].name = obj_name
+
+        obj = bpy.data.objects[obj_name]
+
+        if i < 11:
+            collection.objects.link(obj)
+        else:
+            collection2.objects.link(obj)
+
+
+class SkeletonClass(bpy.types.Operator):
+    bl_idname = 'skeleton.operator'
+    bl_label = 'Add Skeleton'
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        initialize_skeleton()
+        return {"FINISHED"}
+
+
 class PoseClass(bpy.types.Operator):
     bl_idname = 'pose.operator'
     bl_label = 'Add Pose'
@@ -347,10 +383,12 @@ class MouthClass(bpy.types.Operator):
 
 
 def register():
+    bpy.utils.register_class(SkeletonClass)
     bpy.utils.register_class(PoseClass)
     bpy.utils.register_class(MouthClass)
 
 
 def unregister():
+    bpy.utils.unregister_class(SkeletonClass)
     bpy.utils.unregister_class(PoseClass)
     bpy.utils.unregister_class(MouthClass)
