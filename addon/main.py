@@ -18,23 +18,10 @@ INPUT_HEIGHT = 1080
 rotation_threshold = 2
 body_threshold = 0.001
 
-body_parts = ["Nose", "Neck", "RShoulder", "RElbow", "RWrist", "LShoulder", "LElbow", "LWrist", "MidHip", "RHip", "RKnee", "RAnkle",
-              "LHip", "LKnee", "LAnkle", "REye", "LEye", "REar", "LEar", "LBigToe", "LSmallToe", "LHeel", "RBigToe", "RSmallToe", "RHeel", "Background"]
-
-
-'''
-
-phoneDict = ['aa_B', 'aa_I', 'ae_B', 'ae_I', 'ah_B', 'ah_E', 'ah_I', 'ah_S', 'ao_B', 'ao_I', 'aw_I', 'ay_E', 'ay_I',
-             'b_B', 'b_E', 'b_I', 'ch_B', 'ch_E', 'd_B', 'd_E', 'd_I', 'dh_B', 'dh_I', 'eh_B', 'eh_I', 'er_B',
-             'er_E', 'er_I', 'er_S', 'ey_B', 'ey_I', 'ey_S', 'f_B', 'f_E', 'f_I', 'g_B', 'g_I', 'hh_B', 'ih_B',
-             'ih_I', 'iy_B', 'iy_E', 'iy_I', 'jh_B', 'jh_E', 'jh_I', 'k_B', 'k_E', 'k_I', 'l_B', 'l_E', 'l_I',
-             'm_B', 'm_E', 'm_I', 'n_B', 'n_E', 'n_I', 'ng_E', 'ng_I', 'oov_S', 'ow_B', 'ow_E', 'ow_I', 'oy_I',
-             'p_B', 'p_E', 'p_I', 'r_B', 'r_E', 'r_I', 's_B', 's_E', 's_I', 'sh_E', 'sh_I', 't_B', 't_E', 't_I',
-             'th_B', 'th_E', 'th_I', 'uh_I', 'uw_E', 'uw_I', 'v_B', 'v_E', 'v_I', 'w_B', 'w_I', 'y_B', 'y_I', 'z_B',
-             'z_E', 'z_I', 'zh_I']
-'''
-
 timestamp = []
+
+gentle_path = ""
+pose_path = ""
 
 
 def replace_mouth():
@@ -77,56 +64,65 @@ def replace_mouth():
         selected_mouth.keyframe_insert(data_path="hide_viewport", frame=frame)
 
 
-def init_timestamp():
-    JSON_file = open("C:/Users/ereno/automated-2d-animation/gentle.json")
-    data = json.load(JSON_file)
-    words = data["words"]
+def init_timestamp(gentle_path):
+    print("init_timestamp, gentle path: ", gentle_path)
+    if gentle_path != "":
+        JSON_file = open(gentle_path)
+        data = json.load(JSON_file)
+        words = data["words"]
 
-    phones = []
+        phones = []
 
-    for word in words:
-        frame_index = int(word["start"] * 24)
-        for phone in word["phones"]:
-            new_phone = {"start": frame_index, "phone": phone["phone"]}
+        for word in words:
+            frame_index = int(word["start"] * 24)
+            for phone in word["phones"]:
+                new_phone = {"start": frame_index, "phone": phone["phone"]}
 
-            phones.append(new_phone)
-            if round(phone["duration"] * 24) == 0:
-                frame_index += 1
-            else:
-                frame_index += round(phone["duration"] * 24)
+                phones.append(new_phone)
+                if round(phone["duration"] * 24) == 0:
+                    frame_index += 1
+                else:
+                    frame_index += round(phone["duration"] * 24)
 
-    index = 0
-    for phone in phones:
-        while index <= phone["start"]:
-            timestamp.append(phone["phone"])
-            index += 1
-    print("timestamp initialized: ", timestamp)
+        index = 0
+        for phone in phones:
+            while index <= phone["start"]:
+                timestamp.append(phone["phone"])
+                index += 1
+        print("timestamp initialized: ", timestamp)
+    else:
+        print("Lip sync JSON is not selected")
 
 
-def process_json():
+def process_json(pose_path):
+    print("process_json, pose path: ", pose_path)
 
-    processed_frames = []
+    if pose_path != "":
 
-    directory = "C:/Users/ereno/automated-2d-animation/output_json_folder2"
-    with os.scandir(directory) as frames:
-        for frame in frames:
-            with open(frame, 'r') as f:
+        processed_frames = []
 
-                data = json.loads(f.read())
-                keypoints_raw = data["people"][0]["pose_keypoints_2d"]
+        directory = pose_path
+        with os.scandir(directory) as frames:
+            for frame in frames:
+                with open(frame, 'r') as f:
 
-                keypoints = []
+                    data = json.loads(f.read())
+                    keypoints_raw = data["people"][0]["pose_keypoints_2d"]
 
-                # Get x and y values,
-                # ignore the detection confidence for now
-                for i in range(0, len(keypoints_raw), 3):
-                    x = keypoints_raw[i]
-                    y = keypoints_raw[i + 1]
-                    keypoints.append({"x": x, "y": y})
+                    keypoints = []
 
-                processed_frames.append(keypoints)
+                    # Get x and y values,
+                    # ignore the detection confidence for now
+                    for i in range(0, len(keypoints_raw), 3):
+                        x = keypoints_raw[i]
+                        y = keypoints_raw[i + 1]
+                        keypoints.append({"x": x, "y": y})
 
-    return processed_frames
+                    processed_frames.append(keypoints)
+
+        return processed_frames
+    else:
+        print("Pose JSON is not selected")
 
 
 def smoothing_frames(frames):
@@ -365,7 +361,7 @@ class PoseClass(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        frames = process_json()
+        frames = process_json(pose_path)
         smoothed_frames = smoothing_frames(frames)
         drawPose(smoothed_frames)
         return {"FINISHED"}
@@ -377,18 +373,77 @@ class MouthClass(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        init_timestamp()
+        init_timestamp(gentle_path)
         replace_mouth()
         return {"FINISHED"}
+
+
+class OpenBrowser(bpy.types.Operator):
+    bl_idname = "open.browser"
+    bl_label = "Open browser & get filepath"
+
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    # somewhere to remember the address of the file
+
+    def execute(self, context):
+        filepath = self.filepath
+        global pose_path
+        pose_path = filepath
+
+        print("pose_path", pose_path)  # Prints to console
+        # Window>>>Toggle systen console
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):  # See comments at end  [1]
+
+        context.window_manager.fileselect_add(self)
+        # Open browser, take reference to 'self'
+        # read the path to selected file,
+        # put path in declared string type data structure self.filepath
+
+        return {'RUNNING_MODAL'}
+        # Tells Blender to hang on for the slow user input
+
+
+class OpenBrowser2(bpy.types.Operator):
+    bl_idname = "open.browser2"
+    bl_label = "Open browser & get filepath"
+
+    filepath = bpy.props.StringProperty(subtype="FILE_PATH")
+    # somewhere to remember the address of the file
+
+    def execute(self, context):
+        filepath = self.filepath
+        global gentle_path
+        gentle_path = filepath
+        print("gentle_path", gentle_path)  # Prints to console
+        # Window>>>Toggle systen console
+
+        return {'FINISHED'}
+
+    def invoke(self, context, event):  # See comments at end  [1]
+
+        context.window_manager.fileselect_add(self)
+        # Open browser, take reference to 'self'
+        # read the path to selected file,
+        # put path in declared string type data structure self.filepath
+
+        return {'RUNNING_MODAL'}
+        # Tells Blender to hang on for the slow user input
 
 
 def register():
     bpy.utils.register_class(SkeletonClass)
     bpy.utils.register_class(PoseClass)
     bpy.utils.register_class(MouthClass)
+    bpy.utils.register_class(OpenBrowser)
+    bpy.utils.register_class(OpenBrowser2)
 
 
 def unregister():
     bpy.utils.unregister_class(SkeletonClass)
     bpy.utils.unregister_class(PoseClass)
     bpy.utils.unregister_class(MouthClass)
+    bpy.utils.unregister_class(OpenBrowser)
+    bpy.utils.unregister_class(OpenBrowser2)

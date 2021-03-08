@@ -9,7 +9,9 @@ class MouthPanel(bpy.types.Panel):
 
     def draw(self, context):
         self.layout.operator(
-            "mouth.operator", icon='MESH_CUBE', text="Lip sync")
+            "open.browser2", icon='FILEBROWSER', text="Import JSON file")
+        self.layout.operator(
+            "mouth.operator", icon='MUTE_IPO_ON', text="Lip sync")
 
 
 def register():
