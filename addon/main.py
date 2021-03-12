@@ -3,8 +3,6 @@ import json
 import os
 import math
 
-C = bpy.context
-D = bpy.data
 
 UPPER_LEFT = [-4.3202, 2.4302]
 BOTTOM_RIGHT = [4.3202, -2.4302]
@@ -26,12 +24,12 @@ pose_path = ""
 
 def replace_mouth():
 
-    m_a = D.objects["mouth_a"]
-    m_f = D.objects["mouth_f"]
-    m_l = D.objects["mouth_l"]
-    m_m = D.objects["mouth_m"]
-    m_t = D.objects["mouth_t"]
-    m_u = D.objects["mouth_u"]
+    m_a = bpy.data.objects["mouth_a"]
+    m_f = bpy.data.objects["mouth_f"]
+    m_l = bpy.data.objects["mouth_l"]
+    m_m = bpy.data.objects["mouth_m"]
+    m_t = bpy.data.objects["mouth_t"]
+    m_u = bpy.data.objects["mouth_u"]
 
     mouth_list = [m_a, m_f, m_l, m_m, m_t, m_u]
 
@@ -220,16 +218,16 @@ def rotate(object, keypoint_index, frame, parent):
 
 def drawPose(processed_frames):
 
-    body = D.objects["Body"]
-    Upper_Arm_L = D.objects["Upper_Arm_L"]
-    Upper_Arm_R = D.objects["Upper_Arm_R"]
-    Arm_L = D.objects["Arm_L"]
-    Arm_R = D.objects["Arm_R"]
+    body = bpy.data.objects["Body"]
+    Upper_Arm_L = bpy.data.objects["Upper_Arm_L"]
+    Upper_Arm_R = bpy.data.objects["Upper_Arm_R"]
+    Arm_L = bpy.data.objects["Arm_L"]
+    Arm_R = bpy.data.objects["Arm_R"]
 
-    Upper_Leg_L = D.objects["Upper_Leg_L"]
-    Upper_Leg_R = D.objects["Upper_Leg_R"]
-    Leg_L = D.objects["Leg_L"]
-    Leg_R = D.objects["Leg_R"]
+    Upper_Leg_L = bpy.data.objects["Upper_Leg_L"]
+    Upper_Leg_R = bpy.data.objects["Upper_Leg_R"]
+    Leg_L = bpy.data.objects["Leg_L"]
+    Leg_R = bpy.data.objects["Leg_R"]
 
     upper_Arm_L = 0
     upper_Arm_R = 0
