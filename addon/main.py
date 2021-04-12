@@ -63,7 +63,9 @@ def replace_mouth():
 
 
 def init_timestamp(gentle_path):
-    print("init_timestamp, gentle path: ", gentle_path)
+
+    fps = 30
+
     if gentle_path != "":
         JSON_file = open(gentle_path)
         data = json.load(JSON_file)
@@ -72,15 +74,16 @@ def init_timestamp(gentle_path):
         phones = []
 
         for word in words:
-            frame_index = int(word["start"] * 24)
-            for phone in word["phones"]:
-                new_phone = {"start": frame_index, "phone": phone["phone"]}
+            if word["case"] == "success":
+                frame_index = int(word["start"] * fps)
+                for phone in word["phones"]:
+                    new_phone = {"start": frame_index, "phone": phone["phone"]}
 
-                phones.append(new_phone)
-                if round(phone["duration"] * 24) == 0:
-                    frame_index += 1
-                else:
-                    frame_index += round(phone["duration"] * 24)
+                    phones.append(new_phone)
+                    if round(phone["duration"] * fps) == 0:
+                        frame_index += 1
+                    else:
+                        frame_index += round(phone["duration"] * fps)
 
         index = 0
         for phone in phones:
@@ -93,7 +96,6 @@ def init_timestamp(gentle_path):
 
 
 def process_json(pose_path):
-    print("process_json, pose path: ", pose_path)
 
     if pose_path != "":
 
@@ -104,13 +106,13 @@ def process_json(pose_path):
             for frame in frames:
                 with open(frame, 'r') as f:
 
+                    # Get the keypoints of the first detected person only
                     data = json.loads(f.read())
                     keypoints_raw = data["people"][0]["pose_keypoints_2d"]
 
                     keypoints = []
 
-                    # Get x and y values,
-                    # ignore the detection confidence for now
+                    # Get x and y values (ignore the detection confidence for now)
                     for i in range(0, len(keypoints_raw), 3):
                         x = keypoints_raw[i]
                         y = keypoints_raw[i + 1]
@@ -131,7 +133,7 @@ def smoothing_frames(frames):
     for node in range(0, 24):
 
         # assign avg of 3 frames unless the distance is more than the threshold
-        for i in range(0, len(frames), 3):
+        for i in range(0, len(frames)-2, 3):
             first = frames[i][node]
             second = frames[i+1][node]
             third = frames[i+2][node]
@@ -244,19 +246,17 @@ def drawPose(processed_frames):
             # Visualisation test with circles
             '''
             object_name = "circle" + str(keypoint_index)
-
             obj = bpy.data.objects[object_name]
             obj.location = (output_x, 0, output_y)
             obj.keyframe_insert(data_path="location", frame=i)
             '''
-
+            # body
             if(keypoint_index == 1):
 
                 # temporary fix for stabil.
                 previous_x = body.location[0]
 
                 if(abs(previous_x - output_x) > body_threshold):
-
                     body.location = (output_x, 0, output_y)
 
                 body.keyframe_insert(data_path="location", frame=i)
@@ -388,20 +388,12 @@ class OpenBrowser(bpy.types.Operator):
         global pose_path
         pose_path = filepath
 
-        print("pose_path", pose_path)  # Prints to console
-        # Window>>>Toggle systen console
-
         return {'FINISHED'}
 
-    def invoke(self, context, event):  # See comments at end  [1]
+    def invoke(self, context, event):
 
         context.window_manager.fileselect_add(self)
-        # Open browser, take reference to 'self'
-        # read the path to selected file,
-        # put path in declared string type data structure self.filepath
-
         return {'RUNNING_MODAL'}
-        # Tells Blender to hang on for the slow user input
 
 
 class OpenBrowser2(bpy.types.Operator):
@@ -409,26 +401,19 @@ class OpenBrowser2(bpy.types.Operator):
     bl_label = "Open browser & get filepath"
 
     filepath = bpy.props.StringProperty(subtype="FILE_PATH")
-    # somewhere to remember the address of the file
 
     def execute(self, context):
         filepath = self.filepath
         global gentle_path
         gentle_path = filepath
-        print("gentle_path", gentle_path)  # Prints to console
         # Window>>>Toggle systen console
 
         return {'FINISHED'}
 
-    def invoke(self, context, event):  # See comments at end  [1]
+    def invoke(self, context, event):
 
         context.window_manager.fileselect_add(self)
-        # Open browser, take reference to 'self'
-        # read the path to selected file,
-        # put path in declared string type data structure self.filepath
-
         return {'RUNNING_MODAL'}
-        # Tells Blender to hang on for the slow user input
 
 
 def register():
